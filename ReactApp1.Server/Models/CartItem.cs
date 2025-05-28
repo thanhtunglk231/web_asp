@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
-using Microsoft.Build.Framework;
+using System.ComponentModel.DataAnnotations;
 
 namespace ReactApp1.Server.Models
 {
@@ -8,8 +7,7 @@ namespace ReactApp1.Server.Models
     {
         public int CartItemID { get; set; }
 
-        [Required]
-        public string UserID { get; set; }  // FK to AspNetUsers
+        public string? UserID { get; set; }  // Cho phép null nếu bạn gán trong controller
 
         public int ProductID { get; set; }
 
@@ -18,7 +16,7 @@ namespace ReactApp1.Server.Models
         public int Quantity { get; set; } = 1;
 
         [JsonIgnore]
-        public ApplicationUser User { get; set; }
+        public ApplicationUser? User { get; set; }
 
         [JsonIgnore]
         public Product? Product { get; set; }
@@ -26,5 +24,4 @@ namespace ReactApp1.Server.Models
         [JsonIgnore]
         public ProductOption? Option { get; set; }
     }
-
 }

@@ -4,8 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using ReactApp1.Server.Context;
 using ReactApp1.Server.Models;
-using ReactApp1.Server.services;
+using ReactApp1.Server.Services;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseOracle(connectionString);
 });
+builder.Services.AddControllers()
+    .AddJsonOptions(x =>
+    {
+        x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+    });
 
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>

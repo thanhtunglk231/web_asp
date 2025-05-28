@@ -282,3 +282,4 @@ C:\Users\ADMIN\source\repos\ReactApp1\ReactApp1.Server\obj\Debug\net8.0\ReactApp
 C:\Users\ADMIN\source\repos\ReactApp1\ReactApp1.Server\obj\Debug\net8.0\ReactApp1.Server.genruntimeconfig.cache
 C:\Users\ADMIN\source\repos\ReactApp1\ReactApp1.Server\obj\Debug\net8.0\ref\ReactApp1.Server.dll
 C:\Users\ADMIN\source\repos\ReactApp1\ReactApp1.Server\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
+C:\Users\ADMIN\source\repos\ReactApp1\ReactApp1.Server\obj\Debug\net8.0\ReactApp1.Server.sourcelink.json
