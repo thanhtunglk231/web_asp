@@ -6,12 +6,12 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace ReactApp1.Server.services
+namespace ReactApp1.Server.Services
 {
     public class AuthService : IAuthService
     {
         private readonly ApplicationDbContext _context;
-        private readonly UserManager<ApplicationUser> _userManager;  // Sửa ở đây
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly IConfiguration _config;
 
         public AuthService(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IConfiguration config)
@@ -23,10 +23,10 @@ namespace ReactApp1.Server.services
 
         public async Task<bool> RegisterUser(Loginuser loginuser)
         {
-            var identityUser = new ApplicationUser   // Sửa ở đây
+            var identityUser = new ApplicationUser
             {
                 UserName = loginuser.username,
-                Email = loginuser.username,
+                Email = loginuser.username
             };
 
             var result = await _userManager.CreateAsync(identityUser, loginuser.password);
@@ -35,32 +35,36 @@ namespace ReactApp1.Server.services
 
         public async Task<bool> LoginUser(Loginuser loginuser)
         {
-            var identityuser = await _userManager.FindByEmailAsync(loginuser.username);
-            if (identityuser == null)
-            {
+            var identityUser = await _userManager.FindByEmailAsync(loginuser.username);
+            if (identityUser == null)
                 return false;
-            }
 
-            return await _userManager.CheckPasswordAsync(identityuser, loginuser.password);
+            return await _userManager.CheckPasswordAsync(identityUser, loginuser.password);
         }
 
-        public string GenerateTokenString(Loginuser user)
+        public async Task<string> GenerateTokenString(Loginuser loginUser)
         {
-            var key = _config.GetSection("Jwt:Key").Value;
-            if (string.IsNullOrEmpty(key))
-            {
-                throw new InvalidOperationException("JWT Key is not configured.");
-            }
+            // Tìm user theo username
+            var userEntity = await _userManager.FindByNameAsync(loginUser.username);
+            if (userEntity == null)
+                throw new Exception("User không tồn tại");
 
+            // Kiểm tra mật khẩu
+            var passwordValid = await _userManager.CheckPasswordAsync(userEntity, loginUser.password);
+            if (!passwordValid)
+                throw new Exception("Mật khẩu không đúng");
+
+            // Tạo claims
             var claims = new List<Claim>
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.username),
-                new Claim(ClaimTypes.Email, user.username),
-                new Claim(ClaimTypes.Role, "Admin"),
-                new Claim(ClaimTypes.NameIdentifier, user.username),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, userEntity.Id),
+            new Claim(ClaimTypes.Email, userEntity.Email ?? ""),
+            new Claim(ClaimTypes.Role, "Admin"), // hoặc lấy role thực tế
+            new Claim(ClaimTypes.NameIdentifier, userEntity.Id),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
 
+            var key = _config.GetSection("Jwt:Key").Value;
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
             var signingCred = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha512Signature);
 
@@ -74,5 +78,7 @@ namespace ReactApp1.Server.services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+
     }
 }

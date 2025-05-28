@@ -31,7 +31,8 @@ namespace ReactApp1.Server.Controllers
                 {
                     ProductName=c.Product.ProductName,
                     ImgUrl=c.Product.ImageUrl,
-
+                    Price=c.Product.Price,
+                    Quantity = c.Quantity
                 }
                 
                 )
@@ -42,15 +43,26 @@ namespace ReactApp1.Server.Controllers
         [HttpPost("AddCart")]
         public async Task<IActionResult> AddCart([FromBody] CartItem cartItem)
         {
-            var userid = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userid == null) return Unauthorized();
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+            Console.WriteLine("User ID từ token: " + userId);
+            if (userId == null)
+                return Unauthorized("User is not authenticated.");
+
+            // Kiểm tra user có tồn tại trong DB không
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                return Unauthorized("User does not exist in the system.");
+
+            if (cartItem.Quantity <= 0)
+                return BadRequest("Quantity must be greater than 0.");
 
             var existingItem = await _context.CartItems
-                .FirstOrDefaultAsync(c => c.UserID == userid && c.ProductID == cartItem.ProductID && c.OptionID == cartItem.OptionID);
+                .FirstOrDefaultAsync(c => c.UserID == userId && c.ProductID == cartItem.ProductID);
 
             if (existingItem == null)
             {
-                cartItem.UserID = userid;
+                cartItem.UserID = userId;
                 await _context.CartItems.AddAsync(cartItem);
             }
             else
@@ -59,10 +71,8 @@ namespace ReactApp1.Server.Controllers
             }
 
             await _context.SaveChangesAsync();
-            return Ok(cartItem);
+            return Ok(existingItem ?? cartItem);
         }
-
-
 
     }
 }

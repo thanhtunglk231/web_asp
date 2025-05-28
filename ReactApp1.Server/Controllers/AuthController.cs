@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using ReactApp1.Server.Context;
 using ReactApp1.Server.Models;
-using ReactApp1.Server.services;
+using ReactApp1.Server.Services;
 using System.Numerics;
 using System.Security.Claims;
 namespace ReactApp1.Server.Controllers
@@ -33,18 +33,22 @@ namespace ReactApp1.Server.Controllers
             }
             return BadRequest("Dang ky that bai");
         }
-       
+
 
         [HttpPost("Login")]
         public async Task<IActionResult> login([FromBody] Loginuser loginuser)
         {
-            if (await _authservice.LoginUser(loginuser)) {
-                var tockenstring = _authservice.GenerateTokenString(loginuser);
-                return Ok("Dang nhap thanh cong: "+tockenstring);
-               
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+            Console.WriteLine("User ID từ token: " + userId);
+            if (await _authservice.LoginUser(loginuser))
+            {
+                var tokenstring = await _authservice.GenerateTokenString(loginuser);
+                return Ok(new { token = tokenstring });
             }
-            return BadRequest("Dang nhap that bai");
+            return BadRequest("Đăng nhập thất bại");
         }
+
 
     }
 }
