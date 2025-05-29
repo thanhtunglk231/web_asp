@@ -1,12 +1,12 @@
 import React from 'react';
 import './App.css';
-import Mycomponent from './Components/Mycomponent';
+import Navigation from './Components/Navigation';
 
 function App() {
     return (
         <div>
-            <h1>?ng d?ng React + ASP.NET</h1>
-            <Mycomponent />
+         
+            < Navigation />
         </div>
     );
 }
