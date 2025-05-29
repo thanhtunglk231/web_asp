@@ -6,6 +6,9 @@ using ReactApp1.Server.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using ReactApp1.Server.Dto;
 
 namespace ReactApp1.Server.Controllers
 {
@@ -83,6 +86,123 @@ namespace ReactApp1.Server.Controllers
                 _logger.LogError(ex, "Lỗi khi lấy sản phẩm với ID: {ProductID}", ProductID);
                 return StatusCode(500, "Lỗi máy chủ nội bộ");
             }
+
+
         }
+
+           
+        [HttpPost]
+        [Authorize]
+        public async Task<ActionResult<Product>> AddProduct([FromBody] ProductCreateDto productDto)
+        {
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+                return Unauthorized();
+
+            if (string.IsNullOrWhiteSpace(productDto.ProductName))
+            {
+                return BadRequest("Cần có tên sản phẩm.");
+            }
+
+            var product = new Product
+            {
+                ProductName = productDto.ProductName,
+                Description = productDto.Description,
+                Price = productDto.Price,
+                ImageUrl = productDto.ImageUrl,
+                CategoryID = productDto.CategoryID,
+                IsVegetarian = productDto.IsVegetarian,
+                IsBestseller = productDto.IsBestseller,
+                CreatedAt = DateTime.Now
+            };
+
+            try
+            {
+                await _context.Products.AddAsync(product);
+                await _context.SaveChangesAsync();
+                return CreatedAtAction(nameof(GetProductById), new { ProductID = product.ProductID }, product);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi thêm sản phẩm.");
+                return StatusCode(500, "Đã xảy ra lỗi khi thêm sản phẩm.");
+            }
+        }
+
+        [HttpDelete("{producid}")]
+        [Authorize]
+        public async Task<IActionResult> RemoveProduct(int producid)
+        {
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+                return Unauthorized("Bạn cần đăng nhập.");
+
+            if (producid <= 0)
+                return BadRequest("ID không hợp lệ.");
+            var product = await _context.Products.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.ProductID == producid);
+
+            if (product == null)
+                return NotFound("Không tìm thấy sản phẩm với ID đã cho.");
+
+
+            try
+            {
+                // Xóa các bản ghi liên quan trước (nếu bạn cho phép)
+                var cartItems = _context.CartItems.Where(c => c.ProductID == producid);
+                _context.CartItems.RemoveRange(cartItems);
+
+                var orderDetails = _context.OrderDetails.Where(o => o.ProductID == producid);
+                _context.OrderDetails.RemoveRange(orderDetails);
+
+                var productOptions = _context.ProductOptions.Where(po => po.ProductID == producid);
+                _context.ProductOptions.RemoveRange(productOptions);
+
+                var reviews = _context.Reviews.Where(r => r.ProductID == producid);
+                _context.Reviews.RemoveRange(reviews);
+
+                await _context.SaveChangesAsync();
+
+                // Xóa sản phẩm
+                _context.Products.Remove(product);
+                await _context.SaveChangesAsync();
+
+                return Ok("Xóa sản phẩm thành công.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi xóa sản phẩm ID: {producid}", producid);
+                return StatusCode(500, $"Lỗi khi xóa sản phẩm: {ex.Message}");
+            }
+        }
+
+        [HttpPut("{producid}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateProduct(int producid, [FromBody] UpdateProductDto product)
+        {
+            var userid = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            if (userid == null) return Unauthorized();
+            if (product == null) return BadRequest("Du lieu khong dung");
+            try
+            {
+                var preProduct = await _context.Products.FirstOrDefaultAsync(c => c.ProductID == producid);
+                if (preProduct == null) return NotFound("Khong co id nay");
+                preProduct.ProductName = product.ProductName;
+                preProduct.Description = product.Description;
+                preProduct.Price = product.Price;
+                preProduct.ImageUrl = product.ImageUrl;
+                preProduct.CategoryID = product.CategoryID;
+                preProduct.IsVegetarian = product.IsVegetarian;
+                preProduct.IsBestseller = product.IsBestseller;
+                await _context.SaveChangesAsync();
+                return Ok("Sửa thành công ");
+            }
+            catch (Exception ex) { 
+            Console.WriteLine(ex.ToString());
+                return BadRequest(ex.ToString());
+            }
+
+        }
+
     }
 }
