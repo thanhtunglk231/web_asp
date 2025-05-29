@@ -48,6 +48,11 @@ namespace ReactApp1.Server.Controllers
             }
             return BadRequest("Đăng nhập thất bại");
         }
+        [HttpPost("Logout")]
+        public async Task<IActionResult> Logout()
+        {
+            return Ok("Đăng xuất");
+        }
 
 
     }

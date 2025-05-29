@@ -24,7 +24,22 @@ namespace ReactApp1.Server.Controllers
             _context = context;
             _logger = logger;
         }
-
+        [HttpGet("Price")]
+        public async Task<IActionResult> GetProductByPrice(decimal? minprice,decimal? maxprice)
+        {
+            if((minprice.HasValue && minprice.Value<0) || (maxprice.HasValue && maxprice.Value < 0)){
+                return BadRequest("Gia khong chinh xac");
+            }
+            var query= _context.Products.AsQueryable();
+            if (minprice.HasValue) { 
+            query= query.Where(c=>c.Price > minprice.Value);
+            }
+            if (maxprice.HasValue) { 
+            query = query.Where(c=>c.Price < maxprice.Value);
+            }
+            var product= await query.ToListAsync();
+            return Ok(product);
+        }
         // GET: api/Product/all
         [HttpGet("all")]
         [ProducesResponseType(StatusCodes.Status200OK)]
