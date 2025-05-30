@@ -1,16 +1,28 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using ReactApp1.Server.Context;
 using ReactApp1.Server.Models;
+using ReactApp1.Server.services;
 using ReactApp1.Server.Services;
 using System.Text;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// CORS cho React
+FirebaseApp.Create(new AppOptions
+{
+    Credential = GoogleCredential.FromFile("firebase-service-account.json")
+});
+
+builder.Services.AddScoped<FirebaseStorageService>();
+builder.Services.AddScoped<IFirebaseStorageService, FirebaseStorageService>();
+builder.Services.AddScoped<SupabaseService>();
+builder.Services.AddScoped<ISupabaseService,SupabaseService>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",

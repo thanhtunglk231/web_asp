@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using ReactApp1.Server.Dto;
+using ReactApp1.Server.services;
 
 namespace ReactApp1.Server.Controllers
 {
@@ -18,11 +19,15 @@ namespace ReactApp1.Server.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<ProductController> _logger;
+        private readonly FirebaseStorageService _firebaseStorageService;
+        private readonly SupabaseService _supabaseService;    
 
-        public ProductController(ApplicationDbContext context, ILogger<ProductController> logger)
+        public ProductController(ApplicationDbContext context, ILogger<ProductController> logger, FirebaseStorageService firebaseStorageService, SupabaseService supabaseService    )
         {
             _context = context;
             _logger = logger;
+            _firebaseStorageService = firebaseStorageService;
+            _supabaseService = supabaseService;
         }
         [HttpGet("Price")]
         public async Task<IActionResult> GetProductByPrice(decimal? minprice,decimal? maxprice)
@@ -105,7 +110,42 @@ namespace ReactApp1.Server.Controllers
 
         }
 
-           
+
+        [HttpPost("upload/{productId}")]
+        public async Task<IActionResult> UploadProductImage(int productId, IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("Chưa chọn file");
+
+            var product = await _context.Products.FindAsync(productId);
+            if (product == null)
+                return NotFound("Không tìm thấy sản phẩm");
+
+            try
+            {
+                var imageUrl = await _supabaseService.UploadFileAsync(file);
+                if (string.IsNullOrEmpty(imageUrl))
+                    return StatusCode(500, "Lỗi khi upload ảnh lên Supabase");
+
+                product.ImageUrl = imageUrl;
+                await _context.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    message = "Upload thành công",
+                    imageUrl
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi upload ảnh cho sản phẩm {ProductId}", productId);
+                return StatusCode(500, $"Lỗi khi upload ảnh: {ex.Message}");
+            }
+        }
+
+
+
+
         [HttpPost]
         [Authorize]
         public async Task<ActionResult<Product>> AddProduct([FromBody] ProductCreateDto productDto)

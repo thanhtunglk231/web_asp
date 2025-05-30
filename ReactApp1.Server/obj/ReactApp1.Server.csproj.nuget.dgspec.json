@@ -50,6 +50,26 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "AWSSDK.S3": {
+              "target": "Package",
+              "version": "[4.0.1, )"
+            },
+            "FirebaseAdmin": {
+              "target": "Package",
+              "version": "[3.2.0, )"
+            },
+            "FirebaseAuth": {
+              "target": "Package",
+              "version": "[2.0.6, )"
+            },
+            "Google.Apis.Auth": {
+              "target": "Package",
+              "version": "[1.69.0, )"
+            },
+            "Google.Cloud.Storage.V1": {
+              "target": "Package",
+              "version": "[4.13.0, )"
+            },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
               "version": "[8.0.4, )"
@@ -101,6 +121,10 @@
             "Oracle.ManagedDataAccess.Core": {
               "target": "Package",
               "version": "[23.8.0, )"
+            },
+            "RestSharp": {
+              "target": "Package",
+              "version": "[112.1.0, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
